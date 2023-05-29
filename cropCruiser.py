@@ -3,7 +3,9 @@ from tkinter import simpledialog, messagebox
 import random
 
 class CropCruiserGUI:
-    def __init__(self, crop_cruiser):
+    def __init__(self, crop_cruiser, user_name, user_id):
+        self.user_name = user_name
+        self.user_id = user_id
         self.crop_cruiser = crop_cruiser
 
         # Create the main window
@@ -43,26 +45,50 @@ class CropCruiserGUI:
             plant_type = tk.simpledialog.askstring("Add Plant", "Enter the plant type (Basil/Flower):")
             if plant_type.lower() == "basil":
                 pot_number = tk.simpledialog.askinteger("Add Plant", "Enter the pot number:")
+                if pot_number in self.crop_cruiser.used_plant_pots:
+                    tk.messagebox.showerror("Error", "Pot number is already taken. Please enter a different pot number.")
+                    tries = 0
+                    while (pot_number in self.crop_cruiser.used_plant_pots) and (tries < 3):
+                        pot_number = tk.simpledialog.askinteger("Add Plant", "Enter the pot number:")
+                        print(tries)
+                        tries += 1
+
+                    if tries == 3:   
+                        tk.messagebox.showerror("Error", "Too many tries. Please try again later.")
+                        return
+
                 watering_freq = random.choice(["daily", "twice a week", "weekly"])
                 watering_amount = random.choice(["50ml", "100ml", "150ml"])
                 growlight_intensity = random.choice(["low", "medium", "high"])
                 growlight_time = random.choice(["6 hours", "8 hours", "10 hours"])
-                plant = Basil(self.crop_cruiser.user_name, self.crop_cruiser.user_id, self.crop_cruiser.model_number,
-                              self.crop_cruiser.num_plant_pots, plant_name, pot_number, watering_freq, watering_amount,
-                              growlight_intensity, growlight_time)
+                plant = Basil(plant_name, pot_number, watering_freq, watering_amount,
+                            growlight_intensity, growlight_time)
                 self.crop_cruiser.add_plant(plant)
                 self.update_plants_list()
+                
             elif plant_type.lower() == "flower":
                 pot_number = tk.simpledialog.askinteger("Add Plant", "Enter the pot number:")
+                if pot_number in self.crop_cruiser.used_plant_pots:
+                    tk.messagebox.showerror("Error", "Pot number is already taken. Please enter a different pot number.")
+                    tries = 0
+                    while (pot_number in self.crop_cruiser.used_plant_pots) and (tries < 3):
+                        pot_number = tk.simpledialog.askinteger("Add Plant", "Enter the pot number:")
+                        print(tries)
+                        tries += 1
+
+                    if tries == 3:   
+                        tk.messagebox.showerror("Error", "Too many tries. Please try again later.")
+                        return
+
                 watering_freq = random.choice(["daily", "twice a week", "weekly"])
                 watering_amount = random.choice(["50ml", "100ml", "150ml"])
                 growlight_intensity = random.choice(["low", "medium", "high"])
                 growlight_time = random.choice(["6 hours", "8 hours", "10 hours"])
-                plant = Flower(self.crop_cruiser.user_name, self.crop_cruiser.user_id, self.crop_cruiser.model_number,
-                               self.crop_cruiser.num_plant_pots, plant_name, pot_number, watering_freq, watering_amount,
-                               growlight_intensity, growlight_time)
+                plant = Flower(plant_name, pot_number, watering_freq, watering_amount,
+                            growlight_intensity, growlight_time)
                 self.crop_cruiser.add_plant(plant)
                 self.update_plants_list()
+
             else:
                 tk.messagebox.showerror("Error", "Invalid plant type. Please enter 'Basil' or 'Flower'.")
 
@@ -74,22 +100,17 @@ class CropCruiserGUI:
             self.update_plants_list()
 
 
-class App:
-    def __init__(self, user_name, user_id):
-        self.user_name = user_name
-        self.user_id = user_id
-
-
-class CropCruiser(App):
-    def __init__(self, user_name, user_id, model_number, num_plant_pots):
-        super().__init__(user_name, user_id)
+class CropCruiser():
+    def __init__(self, model_number, num_plant_pots):
         self.model_number = model_number
         self.num_plant_pots = num_plant_pots
+        self.used_plant_pots = []
         self.plants = []
 
     def add_plant(self, plant):
         if len(self.plants) < self.num_plant_pots:
             self.plants.append(plant)
+            self.used_plant_pots.append(plant.pot_number)
             print(f"{plant.name} added to the Crop Cruiser.")
         else:
             print("Crop Cruiser is already full. Cannot add more plants.")
@@ -97,15 +118,15 @@ class CropCruiser(App):
     def remove_plant(self, plant):
         if plant in self.plants:
             self.plants.remove(plant)
+            self.used_plant_pots.remove(plant.pot_number)
             print(f"{plant.name} removed from the Crop Cruiser.")
         else:
             print(f"{plant.name} is not found in the Crop Cruiser.")
 
 
-class Plant(CropCruiser):
-    def __init__(self, user_name, user_id, model_number, num_plant_pots, name, pot_number, watering_freq,
+class Plant():
+    def __init__(self, name, pot_number, watering_freq,
                  watering_amount, growlight_intensity, growlight_time):
-        super().__init__(user_name, user_id, model_number, num_plant_pots)
         self.name = name
         self.pot_number = pot_number
         self.watering_freq = watering_freq
@@ -115,26 +136,33 @@ class Plant(CropCruiser):
 
 
 class Basil(Plant):
-    def __init__(self, user_name, user_id, model_number, num_plant_pots, name, pot_number, watering_freq,
+    def __init__(self, name, pot_number, watering_freq,
                  watering_amount, growlight_intensity, growlight_time):
-        super().__init__(user_name, user_id, model_number, num_plant_pots, name, pot_number, watering_freq,
+        super().__init__(name, pot_number, watering_freq,
                          watering_amount, growlight_intensity, growlight_time)
 
 
 class Flower(Plant):
-    def __init__(self, user_name, user_id, model_number, num_plant_pots, name, pot_number, watering_freq,
+    def __init__(self, name, pot_number, watering_freq,
                  watering_amount, growlight_intensity, growlight_time):
-        super().__init__(user_name, user_id, model_number, num_plant_pots, name, pot_number, watering_freq,
+        super().__init__(name, pot_number, watering_freq,
                          watering_amount, growlight_intensity, growlight_time)
 
 
 # Create a Crop Cruiser
-crop_cruiser = CropCruiser("John Doe", 1, "CC001", 6)
+crop_cruiser = CropCruiser("CC001", 6)
 
 # Create a Basil plant and add it to the Crop Cruiser
-my_basil = Basil("John Doe", 1, "CC001", 6, "Basil", 2, "daily", "50ml", "high", "8 hours")
+my_basil = Basil("Basil", 2, "daily", "50ml", "high", "8 hours")
+my_flower = Flower("Rose", 2, "daily", "50ml", "high", "8 hours")
 crop_cruiser.add_plant(my_basil)
+crop_cruiser.add_plant(my_flower)
 
 
 # Create the GUI for the Crop Cruiser
-gui = CropCruiserGUI(crop_cruiser)
+print(crop_cruiser.plants[0].name)
+print(crop_cruiser.plants[1].name)
+
+gui = CropCruiserGUI(crop_cruiser, "John Doe", 1)
+
+
